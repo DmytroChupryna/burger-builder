@@ -1,9 +1,14 @@
 import React, { Component } from 'react';
+import Axios from '../../axios-orders';
+
 import Aux from "../../hoc/Aux/Aux";
 import Burger from '../../components/Burger/Burger';
 import BuildControls from '../../components/Burger/BuildControls/BuildControls';
 import Modal from '../../components/UI/Modal/Modal';
 import OrderSummary from '../../components/Burger/OrderSummary/OrderSummary';
+import Spinner from '../../components/UI/Spinner/Spinner';
+
+import withErrorHandler from '../../hoc/withErrorHandler/withErrorHandler'
 
 const INGREDIENTS_PRICE = {
   salad: 0.5,
@@ -15,15 +20,22 @@ const INGREDIENTS_PRICE = {
 class BurgerBuilder extends Component {
 
   state = {
-    ingredients: {
-      salad: 0,
-      bacon: 0,
-      cheese: 0,
-      meat: 0,
-    },
+    ingredients: null,
     totalPrice: 4,
     purchasable: false,
     purchasing: false,
+    loading: false,
+    error: false
+  }
+
+  componentDidMount() {
+    Axios.get('https://react-my-burger-keks.firebaseio.com/ingredients.json')
+      .then(res => {
+        this.setState({ ingredients: res.data });
+      })
+      .catch(err => {
+        this.setState({ error: err });
+      })
   }
 
   updatePurchaseState(ingredients) {
@@ -81,12 +93,34 @@ class BurgerBuilder extends Component {
     });
   }
 
-  purchaseCancelHandler = () => { 
+  purchaseCancelHandler = () => {
     this.setState({ purchasing: false });
   }
 
   purchaseContinueHandler = () => {
-    alert('You continue!')
+    this.setState({ loading: true });
+    const order = {
+      ingridients: this.state.ingredients,
+      price: this.state.totalPrice,
+      customer: {
+        name: 'Dmytro',
+        address: {
+          city: 'Kyiv',
+          street: 'Vasylya Stusa',
+          apartments: '23'
+        },
+        email: 'react-burger-gmail@gmail.com'
+      },
+      deliveryMethod: 'fastest'
+    };
+
+    Axios.post('/orders.json', order)
+      .then(res => {
+        this.setState({ loading: false, purchasing: false });
+      })
+      .catch(err => {
+        this.setState({ loading: false, purchasing: false });
+      });
   }
 
   render() {
@@ -96,28 +130,45 @@ class BurgerBuilder extends Component {
       disabledInfo[key] = disabledInfo[key] <= 0;
     };
 
+    let orderSummary = null;
+    let burder = this.state.error ? <p>Can`t loaded!</p> : <Spinner />;
+
+    if (this.state.ingredients) {
+      burder = (
+        <Aux>
+          <Burger ingredients={this.state.ingredients} />
+          <BuildControls
+            ingridientAdded={this.addInredientHandler}
+            ingridientRemoved={this.removeInredientHandler}
+            disabled={disabledInfo}
+            purchasable={this.state.purchasable}
+            price={this.state.totalPrice}
+            ordered={this.purchaseHandler} />
+        </Aux>
+      );
+
+      orderSummary = <OrderSummary
+        ingredients={this.state.ingredients}
+        price={this.state.totalPrice}
+        purchaseCancel={this.purchaseCancelHandler}
+        purchaseContinued={this.purchaseContinueHandler} />;
+    }
+    
+    if (this.state.loading) {
+      orderSummary = <Spinner />
+    }
+
     return (
       <Aux>
         <Modal
           show={this.state.purchasing}
           modalClose={this.purchaseCancelHandler} >
-          <OrderSummary
-            ingredients={this.state.ingredients}
-            price={this.state.totalPrice}
-            purchaseCancel={this.purchaseCancelHandler}
-            purchaseContinued={this.purchaseContinueHandler}/>
+          {orderSummary}
         </Modal>
-        <Burger ingredients={this.state.ingredients} />
-        <BuildControls
-          ingridientAdded={this.addInredientHandler}
-          ingridientRemoved={this.removeInredientHandler}
-          disabled={disabledInfo}
-          purchasable={this.state.purchasable}
-          price={this.state.totalPrice}
-          ordered={this.purchaseHandler}/>
+        {burder}
       </Aux>
     );
   };
 }
 
-export default BurgerBuilder;
+export default withErrorHandler(BurgerBuilder, Axios);
