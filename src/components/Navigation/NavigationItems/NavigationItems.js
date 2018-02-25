@@ -8,6 +8,7 @@ export default class NavigationItems extends Component {
       <ul className={classes.NavigationItems}>
         <NavigationItem link="/" exact>Burger builder</NavigationItem>
         <NavigationItem link="/orders">Orders</NavigationItem>
+        <NavigationItem link="/auth">Authnticate</NavigationItem>
       </ul>
     )
   }
