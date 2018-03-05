@@ -1,25 +1,24 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 import Burger from '../../Burger/Burger';
 import Button from '../../UI/Button/Button';
-
 import classes from './CheckoutSummary.css';
 
-export default class CheckoutSummary extends Component {
-  render() {
+const checkoutSummary = (props) => {
     return (
-      <div className={classes.CheckoutSummary}>
-        <h1>We hope it tastes well!</h1>
-        <div style={{ width: '100%', margin: 'auto' }}>
-          <Burger ingredients={this.props.ingredients} />
+        <div className={classes.CheckoutSummary}>
+            <h1>We hope it tastes well!</h1>
+            <div style={{width: '100%', margin: 'auto'}}>
+                <Burger ingredients={props.ingredients}/>
+            </div>
+            <Button 
+                btnType="Danger"
+                clicked={props.checkoutCancelled}>CANCEL</Button>
+            <Button 
+                btnType="Success"
+                clicked={props.checkoutContinued}>CONTINUE</Button>
         </div>
-        <Button
-          btnType="Danger"
-          clicked={this.props.checkoutCancelled}>CANCEL</Button>
-        <Button
-          btnType="Success"
-          clicked={this.props.checkoutContinued}>CONTINUE</Button>
-      </div>
-    )
-  }
+    );
 }
+
+export default checkoutSummary;
